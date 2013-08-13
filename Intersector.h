@@ -22,7 +22,6 @@
 #define FFLD_INTERSECTOR_H
 
 #include "Rectangle.h"
-
 #include <algorithm>
 
 namespace FFLD
@@ -37,56 +36,12 @@ public:
 	/// @param[in] threshold The threshold of the criterion.
 	/// @param[in] felzenszwalb Use Felzenszwalb's criterion instead (area of intersection over area
 	/// of second rectangle). Useful to remove small detections inside bigger ones.
-	Intersector(Rectangle reference, double threshold = 0.5, bool felzenszwalb = false) :
-	reference_(reference), threshold_(threshold), felzenszwalb_(felzenszwalb)
-	{
-	}
+	Intersector(Rectangle reference, double threshold, bool felzenszwalb = false);
 	
 	/// Tests for the intersection between a given rectangle and the reference.
 	/// @param[in] rect The rectangle to intersect with the reference.
 	/// @param[out] score The score of the intersection.
-	bool operator()(Rectangle rect, double * score = 0) const
-	{
-		if (score)
-			*score = 0.0;
-		
-		const int left = std::max(reference_.left(), rect.left());
-		const int right = std::min(reference_.right(), rect.right());
-		
-		if (right < left)
-			return false;
-		
-		const int top = std::max(reference_.top(), rect.top());
-		const int bottom = std::min(reference_.bottom(), rect.bottom());
-		
-		if (bottom < top)
-			return false;
-		
-		const int intersectionArea = (right - left + 1) * (bottom - top + 1);
-		const int rectArea = rect.area();
-		
-		if (felzenszwalb_) {
-			if (intersectionArea >= rectArea * threshold_) {
-				if (score)
-					*score = static_cast<double>(intersectionArea) / rectArea;
-				
-				return true;
-			}
-		}
-		else {
-			const int referenceArea = reference_.area();
-			const int unionArea = referenceArea + rectArea - intersectionArea;
-			
-			if (intersectionArea >= unionArea * threshold_) {
-				if (score)
-					*score = static_cast<double>(intersectionArea) / unionArea;
-				
-				return true;
-			}
-		}
-		
-		return false;
-	}
+	bool operator()(Rectangle rect, double * score = 0) const;
 	
 private:
 	Rectangle reference_;

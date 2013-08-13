@@ -10,13 +10,14 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include "jiObjectDetector.h"
 
 #ifndef _WIN32
 #include <sys/time.h>
 
 namespace FFLD
 {	
-class ObjectDetect
+class FFLDObjDetector :public jake::jiObjectDetector 
 {
 private:
 	timeval Start;
@@ -55,10 +56,9 @@ struct Detection : public FFLD::Rectangle
 
 	void draw(JPEGImage & image, const FFLD::Rectangle & rect, uint8_t r, uint8_t g, uint8_t b,int linewidth);
 			  
-	void detect(const Mixture & mixture, int width, int height, const HOGPyramid & pyramid,double threshold, double overlap, cv::Mat image, std::ostream & out,const std::string & images, std::vector<Detection> & detections);
-			
-	int detectObjects(cv::Mat image,char * model,std::vector<Detection> & detections);
+	void detectObjects(const Mixture & mixture, int width, int height, const HOGPyramid & pyramid,double threshold, double overlap, cv::Mat image, std::ostream & out,const std::string & images, std::vector<Detection> & detections);
 	
+	virtual bool detect(cv::Mat& image,const jake::jiObjectDetectionParams& params,std::vector<jake::jiObjectDetection> & detections);
 };
 }
 

@@ -22,13 +22,14 @@
 #include "ffld.h"
 
 using namespace FFLD;
+using namespace jake;
 
-inline void ObjectDetect::start()
+inline void FFLDObjDetector::start()
 {
 	gettimeofday(&Start, 0);
 }
 
-inline int ObjectDetect::stop()
+inline int FFLDObjDetector::stop()
 {
 	gettimeofday(&Stop, 0);
 	
@@ -38,18 +39,18 @@ inline int ObjectDetect::stop()
 	return duration.tv_sec * 1000 + (duration.tv_usec + 500) / 1000;
 }
 
-	ObjectDetect::Detection::Detection() : score(0), l(0), x(0), y(0)
+	FFLDObjDetector::Detection::Detection() : score(0), l(0), x(0), y(0)
 	{
 	}
 	
 	//rectangles copy constructor is being called
 	
-	ObjectDetect::Detection::Detection(HOGPyramid::Scalar score, int l, int x, int y, FFLD::Rectangle bndbox) :
+	FFLDObjDetector::Detection::Detection(HOGPyramid::Scalar score, int l, int x, int y, FFLD::Rectangle bndbox) :
 	FFLD::Rectangle(bndbox), score(score), l(l), x(x), y(y)
 	{
 	}
 	
-	bool ObjectDetect::Detection::operator<(const Detection & detection) const
+	bool FFLDObjDetector::Detection::operator<(const Detection & detection) const
 	{
 		return score > detection.score;
 	}
@@ -59,13 +60,13 @@ using namespace std;
 using namespace cv;
 
 
-void ObjectDetect::showUsage()
+void FFLDObjDetector::showUsage()
 {
-	cout << "Usage: test [options] image.jpg , test [options] image_set.txt\n\n"
+	cout << "Incorrect usage, just run the executable using \"./\" "
 		 << endl;
 }
 
-void ObjectDetect::draw(JPEGImage & image, const FFLD::Rectangle & rect, uint8_t r, uint8_t g, uint8_t b,
+void FFLDObjDetector::draw(JPEGImage & image, const FFLD::Rectangle & rect, uint8_t r, uint8_t g, uint8_t b,
 		  int linewidth)
 {
 	if (image.empty() || rect.empty() || (image.depth() < 3))
@@ -160,9 +161,9 @@ void ObjectDetect::draw(JPEGImage & image, const FFLD::Rectangle & rect, uint8_t
 				bits[(y * width + right + linewidth) * depth + i] = 255;
 	}
 }
-void ObjectDetect::detect(const Mixture & mixture, int width, int height, const HOGPyramid & pyramid,
+void FFLDObjDetector::detectObjects(const Mixture & mixture, int width, int height, const HOGPyramid & pyramid,
 			double threshold, double overlap, Mat image, ostream & out,
-			const string & images, vector<ObjectDetect::Detection> & detections)
+			const string & images, vector<FFLDObjDetector::Detection> & detections)
 {
 	// Compute the scores
 	vector<HOGPyramid::Matrix> scores;
@@ -213,7 +214,7 @@ void ObjectDetect::detect(const Mixture & mixture, int width, int height, const 
 						bndbox.setHeight(min(bndbox.height(), height - bndbox.y()));
 						
 						if (!bndbox.empty())
-							detections.push_back(ObjectDetect::Detection(score, i, x, y, bndbox));
+							detections.push_back(FFLDObjDetector::Detection(score, i, x, y, bndbox));
 					}
 				}
 			}
@@ -230,11 +231,10 @@ void ObjectDetect::detect(const Mixture & mixture, int width, int height, const 
 	
 }
 
-int ObjectDetect::detectObjects(cv::Mat image,char * model,vector<ObjectDetect::Detection> & detections)
+bool FFLDObjDetector::detect(cv::Mat& image,const jake::jiObjectDetectionParams& params,vector<jake::jiObjectDetection> & detections)
 {
 	
 	Object::Name name = Object::PERSON;
-	vector<Rect> bndboxes;
 	string results;
 	string images_bb;
 	int nbNegativeScenes = -1;
@@ -248,7 +248,7 @@ int ObjectDetect::detectObjects(cv::Mat image,char * model,vector<ObjectDetect::
 	
     char buffer[1000];
     
-	const string filemod(model);
+	const string filemod(params.model);
 	
 	const size_t lastDotmod = filemod.find_last_of('.');
 	
@@ -258,7 +258,7 @@ int ObjectDetect::detectObjects(cv::Mat image,char * model,vector<ObjectDetect::
 		if (image.empty()) {
 			showUsage();
 			cerr << "\nInvalid image "<< endl;
-			return -1;
+			return false;
 		}
 		
         //detection
@@ -268,7 +268,7 @@ int ObjectDetect::detectObjects(cv::Mat image,char * model,vector<ObjectDetect::
         if (!in.is_open()) {
             showUsage();
             cerr << "\nInvalid model file " << filemod << endl;
-            return -1;
+            return false;
         }
 
         Mixture mixture;
@@ -276,8 +276,8 @@ int ObjectDetect::detectObjects(cv::Mat image,char * model,vector<ObjectDetect::
 
         if (mixture.empty()) {
             showUsage();
-            cerr << "\nInvalid model" << model << endl;
-            return -1;
+            cerr << "\nInvalid model" << params.model << endl;
+            return false;
         }
         
 //         load image
@@ -289,7 +289,7 @@ int ObjectDetect::detectObjects(cv::Mat image,char * model,vector<ObjectDetect::
 
         if (pyramid.empty()) {
             showUsage();
-            return -1;
+            return false;
         }
 
         cout << "Computed HOG features in " << 	stop() << " ms" << endl;
@@ -300,7 +300,7 @@ int ObjectDetect::detectObjects(cv::Mat image,char * model,vector<ObjectDetect::
 		if (!Patchwork::Init((pyramid.levels()[0].rows() - padding + 15) & ~15,
 							 (pyramid.levels()[0].cols() - padding + 15) & ~15)) {
 			cerr << "\nCould not initialize the Patchwork class" << endl;
-			return -1;
+			return false;
 		}
 		
 		cout << "Initialized FFTW in " << 	stop() << " ms" << endl;
@@ -314,20 +314,23 @@ int ObjectDetect::detectObjects(cv::Mat image,char * model,vector<ObjectDetect::
 		
         sprintf(buffer,"MatImage.jpg");
 
-		detect(mixture, img.width(), img.height(), pyramid, thresh, overlap, image, out,
-			   buffer, detections);		
+		vector<FFLDObjDetector::Detection>  tempDetections;
+		
+		detectObjects(mixture, img.width(), img.height(), pyramid, thresh, overlap, image, out,
+			   buffer, tempDetections);		
 		cout << "Computed the convolutions and distance transforms in " << stop() << " ms" << endl;  
 		
-		for (int j = 0; j < detections.size(); ++j) 
+		for (int j = 0; j < tempDetections.size(); ++j) 
 		{
-			Rect bndbox;
-			bndbox.x=detections[j].Rectangle::x();
-			bndbox.y=detections[j].Rectangle::y();
-			bndbox.width=detections[j].width();
-			bndbox.height=detections[j].height();
-			bndboxes.push_back(bndbox);
+			jake::jiObjectDetection bndbox;
+			bndbox.box.x=tempDetections[j].Rectangle::x();
+			bndbox.box.y=tempDetections[j].Rectangle::y();
+			bndbox.box.width=tempDetections[j].width();
+			bndbox.box.height=tempDetections[j].height();
+			bndbox.score=tempDetections[j].score;
+			detections.push_back(bndbox);
 		}
-		return -1;  
+		return true;  
                 
     }
 }

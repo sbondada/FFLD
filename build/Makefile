@@ -135,6 +135,30 @@ HOGPyramid.cpp.s:
 	$(MAKE) -f CMakeFiles/ffld_test.dir/build.make CMakeFiles/ffld_test.dir/HOGPyramid.cpp.s
 .PHONY : HOGPyramid.cpp.s
 
+Intersector.o: Intersector.cpp.o
+.PHONY : Intersector.o
+
+# target to build an object file
+Intersector.cpp.o:
+	$(MAKE) -f CMakeFiles/ffld_test.dir/build.make CMakeFiles/ffld_test.dir/Intersector.cpp.o
+.PHONY : Intersector.cpp.o
+
+Intersector.i: Intersector.cpp.i
+.PHONY : Intersector.i
+
+# target to preprocess a source file
+Intersector.cpp.i:
+	$(MAKE) -f CMakeFiles/ffld_test.dir/build.make CMakeFiles/ffld_test.dir/Intersector.cpp.i
+.PHONY : Intersector.cpp.i
+
+Intersector.s: Intersector.cpp.s
+.PHONY : Intersector.s
+
+# target to generate assembly for a file
+Intersector.cpp.s:
+	$(MAKE) -f CMakeFiles/ffld_test.dir/build.make CMakeFiles/ffld_test.dir/Intersector.cpp.s
+.PHONY : Intersector.cpp.s
+
 JPEGImage.o: JPEGImage.cpp.o
 .PHONY : JPEGImage.o
 
@@ -327,6 +351,30 @@ ffld_test.cpp.s:
 	$(MAKE) -f CMakeFiles/ffld_test.dir/build.make CMakeFiles/ffld_test.dir/ffld_test.cpp.s
 .PHONY : ffld_test.cpp.s
 
+jiObjectDetector.o: jiObjectDetector.cpp.o
+.PHONY : jiObjectDetector.o
+
+# target to build an object file
+jiObjectDetector.cpp.o:
+	$(MAKE) -f CMakeFiles/ffld_test.dir/build.make CMakeFiles/ffld_test.dir/jiObjectDetector.cpp.o
+.PHONY : jiObjectDetector.cpp.o
+
+jiObjectDetector.i: jiObjectDetector.cpp.i
+.PHONY : jiObjectDetector.i
+
+# target to preprocess a source file
+jiObjectDetector.cpp.i:
+	$(MAKE) -f CMakeFiles/ffld_test.dir/build.make CMakeFiles/ffld_test.dir/jiObjectDetector.cpp.i
+.PHONY : jiObjectDetector.cpp.i
+
+jiObjectDetector.s: jiObjectDetector.cpp.s
+.PHONY : jiObjectDetector.s
+
+# target to generate assembly for a file
+jiObjectDetector.cpp.s:
+	$(MAKE) -f CMakeFiles/ffld_test.dir/build.make CMakeFiles/ffld_test.dir/jiObjectDetector.cpp.s
+.PHONY : jiObjectDetector.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -339,6 +387,9 @@ help:
 	@echo "... HOGPyramid.o"
 	@echo "... HOGPyramid.i"
 	@echo "... HOGPyramid.s"
+	@echo "... Intersector.o"
+	@echo "... Intersector.i"
+	@echo "... Intersector.s"
 	@echo "... JPEGImage.o"
 	@echo "... JPEGImage.i"
 	@echo "... JPEGImage.s"
@@ -363,6 +414,9 @@ help:
 	@echo "... ffld_test.o"
 	@echo "... ffld_test.i"
 	@echo "... ffld_test.s"
+	@echo "... jiObjectDetector.o"
+	@echo "... jiObjectDetector.i"
+	@echo "... jiObjectDetector.s"
 .PHONY : help
 
 

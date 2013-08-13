@@ -1,3 +1,4 @@
+
 #include "ffld.h"
 #include "cv.h"
 #include <iostream>
@@ -5,6 +6,7 @@
 using namespace std;
 using namespace cv;
 using namespace FFLD;
+using namespace jake;
 
 int main(int argc, char * argv[])
 {
@@ -18,7 +20,7 @@ int main(int argc, char * argv[])
 	const string fileim(imname);
 	cv::Mat image;
 	image=cv::imread(fileim,1);
-	ObjectDetect o;
+	FFLD::FFLDObjDetector o;
 	
 	if (image.empty()) 
 	{
@@ -27,14 +29,20 @@ int main(int argc, char * argv[])
 			return -1;
 	}
 	  
-	  std::vector<FFLD::ObjectDetect::Detection> detections;
-	  JPEGImage img(image);
-	  o.detectObjects(image,model,detections);
+	vector<jake::jiObjectDetection>  detections;
+	JPEGImage img(image);
+	jake::jiObjectDetectionParams modelparam;
+	modelparam.model=model;
+	o.detect(image,modelparam,detections);
 		
-		for (int j = 0; j < detections.size(); ++j) 
-		{
-			o.draw(img, detections[j], 255, 0, 0, 2);
-		}     
-        img.save("hello.jpg");       
-      
+	for (int j = 0; j < detections.size(); ++j) 
+	{
+		FFLD::Rectangle rect;
+		rect.setX(detections[j].box.x);
+		rect.setY(detections[j].box.y);
+		rect.setWidth(detections[j].box.width);
+		rect.setHeight(detections[j].box.height);
+		o.draw(img,rect, 255, 0, 0, 2);
+	}     
+    img.save("hello.jpg");         
 }

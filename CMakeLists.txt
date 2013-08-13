@@ -19,8 +19,8 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF()
 
 # Also list the headers so that they are displayed along the .cpp files in the IDE
-SET(HEADERS Rectangle.h JPEGImage.h Object.h  HOGPyramid.h Patchwork.h Model.h Mixture.h Intersector.h ffld.h)
-SET(SOURCES Rectangle.cpp JPEGImage.cpp Object.cpp  HOGPyramid.cpp Patchwork.cpp Model.cpp Mixture.cpp ffld.cpp)
+SET(HEADERS Rectangle.h JPEGImage.h Object.h  HOGPyramid.h Patchwork.h Model.h Mixture.h Intersector.h jiObjectDetector.h ffld.h )
+SET(SOURCES Rectangle.cpp JPEGImage.cpp Object.cpp  HOGPyramid.cpp Patchwork.cpp Model.cpp Mixture.cpp  Intersector.cpp jiObjectDetector.cpp ffld.cpp)
 ADD_EXECUTABLE(ffld_test ${HEADERS} ${SOURCES} ffld_test.cpp)
 
 # Define the options
