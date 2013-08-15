@@ -32,7 +32,7 @@ jiObjectDetector::~jiObjectDetector()
 {
 }
 
-bool detect(cv::Mat& image_, const jake::jiObjectDetectionParams& params,std::vector<jake::jiObjectDetection>& detections)
+bool jiObjectDetector::detect(cv::Mat& image_, const jake::jiObjectDetectionParams& params,std::vector<jake::jiObjectDetection>& detections)
 {
 }
 

@@ -60,6 +60,7 @@ public:
     /** Main detection function that takes an image, a set of parameters and
      *   runs the classifiers on it.
      */
+   virtual bool detect(cv::Mat& image_, const jiObjectDetectionParams& params,std::vector<jiObjectDetection>& detections);
 };
 
 } /* namespace jake */

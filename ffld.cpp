@@ -330,9 +330,12 @@ bool FFLDObjDetector::detect(cv::Mat& image,const jake::jiObjectDetectionParams&
 			bndbox.score=tempDetections[j].score;
 			detections.push_back(bndbox);
 		}
-		return true;  
-                
+		return true;              
     }
+    else
+    {
+		return false;
+	}
 }
 
 

@@ -10,7 +10,6 @@ using namespace jake;
 
 int main(int argc, char * argv[])
 {
-	
     char* imname = argv[1];
     char* model = argv[2];
 
@@ -31,6 +30,7 @@ int main(int argc, char * argv[])
 	  
 	vector<jake::jiObjectDetection>  detections;
 	JPEGImage img(image);
+	img.save("pre.jpg");
 	jake::jiObjectDetectionParams modelparam;
 	modelparam.model=model;
 	o.detect(image,modelparam,detections);
