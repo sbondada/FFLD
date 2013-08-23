@@ -34,50 +34,116 @@ struct perFrameDetections
 	std::vector<perTypeDetections>	typeList;
 };
 
-struct conceptDetections
+struct conceptEntry
 {
-	std::set<std::string>  detectorset;
+	std::string detectionname;
+	int occurunces;
+	bool operator<(const conceptEntry &a) const
+	{
+		return (a.detectionname < this->detectionname);
+	}
 };
 
-void getDetectionSet(int framestart,std::set<std::string>& detectorset,std::vector<perFrameDetections>& framedetectionList,int windowsize)
+struct conceptDetections
 {
-	for(int i=framestart;i<framestart+windowsize;i++)
+	std::set<conceptEntry>  detectorset;
+};
+
+std::set<conceptEntry>::iterator findmatch(std::set<conceptEntry>& detectorset,std::string matchword)
+{
+	for (std::set<conceptEntry>::iterator i = detectorset.begin(); i != detectorset.end(); i++) 
 	{
-		for(int j=0;j<framedetectionList[i].typeList.size();j++)
+		if(i->detectionname==matchword)
 		{
-		detectorset.insert(framedetectionList[i].typeList[j].detectionname);
+			return i;
 		}
 	}
-	
+	return detectorset.end();
 }
 
-float calcJaccardDist(std::set<std::string>& currentdetectorset,std::set<std::string>& nextdetectorset)
+void getDetectionSet(int framestart,std::set<conceptEntry>& detectorset,std::vector<perFrameDetections>& framedetectionList,int windowsize)
+{
+	cout<<"getDetection--Outside "<<framestart<<endl;
+	for(int i=framestart;(i<framestart+windowsize && i<framedetectionList.size());i++)
+	{
+		cout<<"getDetection--inside "<<framedetectionList[i].typeList.size()<<endl;
+		for(int j=0;j<framedetectionList[i].typeList.size();j++)
+		{
+			cout<<"getDetection--"<<endl;
+			std::set<conceptEntry>::iterator matchworditr=findmatch(detectorset,framedetectionList[i].typeList[j].detectionname);
+			if(matchworditr!=detectorset.end())
+			{
+				conceptEntry tempConceptEntry;
+				tempConceptEntry.detectionname=framedetectionList[i].typeList[j].detectionname;
+				tempConceptEntry.occurunces=matchworditr->occurunces+framedetectionList[i].typeList[j].detectioncount;
+				detectorset.erase(matchworditr);
+				detectorset.insert(tempConceptEntry);
+			}
+			else
+			{
+				conceptEntry tempConceptEntry;
+				tempConceptEntry.detectionname=framedetectionList[i].typeList[j].detectionname;
+				tempConceptEntry.occurunces=framedetectionList[i].typeList[j].detectioncount;
+				detectorset.insert(tempConceptEntry);
+			}
+		}
+	}	
+}
+
+float calcJaccardDist(std::set<conceptEntry>& currentdetectorset,std::set<conceptEntry>& nextdetectorset)
 {
 	int intersectioncount=0;
 	int unioncount =0;
 	float jaccarddist=0;
+	  
+	cout<<"calculate jaccard--Outside"<<endl;
+	  
 	if(currentdetectorset.size()==0 || nextdetectorset.size()==0)
 	{
+	    cout<<"calculate jaccard--inside size cond"<<endl;
 		return 1.0f;	
 	}
 
 	std::set<std::string> intersectresult;
 	std::set_intersection (currentdetectorset.begin(),currentdetectorset.end(),nextdetectorset.begin(),nextdetectorset.end(),inserter(intersectresult, intersectresult.begin()));
 	intersectioncount=intersectresult.size();
+	cout<<"intercount "<<intersectioncount<<endl;
 	
 	std::set<std::string> unionresult;
 	std::set_union (currentdetectorset.begin(),currentdetectorset.end(),nextdetectorset.begin(),nextdetectorset.end(),inserter(unionresult, unionresult.begin()));
 	unioncount=unionresult.size();
+	cout<<"unioncount "<<unioncount<<endl;
 	
-	jaccarddist=(1-(intersectioncount/unioncount));
+	jaccarddist=(1-((float)intersectioncount/unioncount));
+	
 	return jaccarddist;	
 }
 
-void performUnion(std::set<std::string>& currentdetectorset,std::set<std::string>& nextdetectorset)
+void performUnion(std::set<conceptEntry>& currentdetectorset,std::set<conceptEntry>& nextdetectorset)
 {
-	for (set<std::string>::iterator i = currentdetectorset.begin(); i != currentdetectorset.end(); i++) 
+	cout<<"performunion--out"<<endl;
+	if(nextdetectorset.size()!=0)
+	{	
+		cout<<"performunion--inside if cond"<<endl;
+	for (set<conceptEntry>::iterator i = nextdetectorset.begin(); i != nextdetectorset.end(); i++) 
 	{
-		currentdetectorset.insert(*i);
+		set<conceptEntry>::iterator matchworditr=findmatch(currentdetectorset,i->detectionname);
+		if(matchworditr!=currentdetectorset.end())
+		{
+			conceptEntry tempConceptEntry;
+			tempConceptEntry.detectionname=i->detectionname;
+			tempConceptEntry.occurunces=matchworditr->occurunces+i->occurunces;
+			currentdetectorset.erase(matchworditr);
+			currentdetectorset.insert(tempConceptEntry);
+		}
+		else
+		{
+			conceptEntry tempConceptEntry;
+			tempConceptEntry.detectionname=i->detectionname;
+			tempConceptEntry.occurunces=i->occurunces;
+			currentdetectorset.insert(tempConceptEntry);
+		}
+	}
 	}
 	
 }
@@ -86,15 +152,18 @@ void generateConcepts(std::vector<perFrameDetections>& framedetectionList,std::v
 {
 	for(int i=0;i<framedetectionList.size();i=i+3)
 	{
+		cout<<"entry-statement"+i<<endl;
 		conceptDetections concept;
 		getDetectionSet(i,concept.detectorset,framedetectionList,windowsize);
 		float jaccarddist=0;
 		while (jaccarddist<0.5)
 		{
 		i=i+3;
-		std::set<std::string>  nextdetectorset;
+		std::set<conceptEntry>  nextdetectorset;
 		getDetectionSet(i,nextdetectorset,framedetectionList,windowsize);
+		cout<<"hi inside and after second getdetection"<<endl ;
 		jaccarddist=calcJaccardDist(concept.detectorset,nextdetectorset);
+		cout<<"jaccard dist "<<jaccarddist<<endl;
 		if(jaccarddist<0.5)
 		{
 			performUnion(concept.detectorset,nextdetectorset);
@@ -144,6 +213,7 @@ int main()
 			if (fs::is_regular_file(frame_iter->status()) )
 			{
 				numOfFramesAccessed++;
+				cout<<frame_iter->path().c_str()<<endl;
 				const string fileim(frame_iter->path().c_str());
 				cv::Mat frame;
 				frame=cv::imread(fileim,1);
@@ -186,33 +256,65 @@ int main()
 				
 						std::sort(framedetection.typeList.begin(),framedetection.typeList.end());
 						
-						//include the code to remove the part of the detections which is not satisfying the threshold.
+						}
+					}
+				}
+				//include the code to remove the part of the detections which is not satisfying the threshold.
 						unsigned int index=0;
 						for(int j=0;j<framedetection.typeList.size();j++)
 						{
 							if(framedetection.typeList[j].maxdetectionscore==0)
 							{
 								index=j;
+								cout<<"breaking"<<endl;
 								break;
 							}
 						}
 						
 						framedetection.typeList.resize(index);
-						
-						}
-					}
+				cout<<framedetection.typeList.size()<<endl;
 				framedetectionList.push_back(framedetection);
-				}
 			}
 		}
 	}
-	/*for(int i=0;i<framedetectionList[0].typeList.size();i++)
+	cout<<framedetectionList[0].typeList.size()<<endl;	
+	cout<<framedetectionList[1].typeList.size()<<endl;
+	cout<<framedetectionList[2].typeList.size()<<endl;
+	cout<<framedetectionList[3].typeList.size()<<endl;
+	cout<<framedetectionList[4].typeList.size()<<endl;
+	
+	for(int i=0;i<framedetectionList[0].typeList.size();i++)
 	{
 	cout<<framedetectionList[0].typeList[i].maxdetectionscore<<endl;
-	}*/
-	
+	}
+	for(int i=0;i<framedetectionList[1].typeList.size();i++)
+	{
+	cout<<framedetectionList[1].typeList[i].maxdetectionscore<<endl;
+	}
+	for(int i=0;i<framedetectionList[2].typeList.size();i++)
+	{
+	cout<<framedetectionList[2].typeList[i].maxdetectionscore<<endl;
+	}
+	for(int i=0;i<framedetectionList[3].typeList.size();i++)
+	{
+	cout<<framedetectionList[3].typeList[i].maxdetectionscore<<endl;
+	}
+	for(int i=0;i<framedetectionList[4].typeList.size();i++)
+	{
+	cout<<framedetectionList[4].typeList[i].maxdetectionscore<<endl;
+	}
+
 	std::vector<conceptDetections> conceptList;
 	generateConcepts(framedetectionList,conceptList,3);
 	cout<<conceptList.size()<<endl;
+	
+	for(int k=0;k<conceptList.size();k++)
+	{
+		for (set<conceptEntry>::iterator it = conceptList[k].detectorset.begin(); it != conceptList[k].detectorset.end(); it++) 
+		{
+		cout<<it->detectionname<<endl;
+		}
+		cout<<"======================================================="<<endl;
+	}
 	
 } 
